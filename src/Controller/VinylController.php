@@ -2,9 +2,13 @@
 
 namespace App\Controller;
 
+use Psr\Cache\CacheItemInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
 use function Symfony\Component\String\u;
 
 class VinylController extends AbstractController
@@ -25,10 +29,15 @@ class VinylController extends AbstractController
   }
 
   #[Route('/browse/{slug}', name: 'browse_genre')]
-  public function browse(string $slug = null): Response
+  public function browse(HttpClientInterface $httpClient, CacheInterface $cache, string $slug = null): Response
   {
     $genre = $slug ? u(str_replace('-', ' ', $slug))->title(true) : null;
-    $mixes = $this->getMixes();
+
+    $mixes = $cache->get('mixes_data', function (CacheItemInterface $cacheItem) use ($httpClient) {
+      $cacheItem->expiresAfter(5);
+      $response = $httpClient->request('GET', 'https://raw.githubusercontent.com/SymfonyCasts/vinyl-mixes/main/mixes.json');
+      return $response->toArray();
+    });
 
     return $this->render('vinyl/browse.html.twig', [
       'genre' => $genre,
@@ -36,28 +45,4 @@ class VinylController extends AbstractController
     ]);
   }
 
-  private function getMixes()
-  {
-    // temporary data
-    return [
-      [
-        'title' => 'PB & Jams',
-        'trackCount' => 14,
-        'genre' => 'Rock',
-        'createdAt' => new \DateTime('2021-10-02')
-      ],
-      [
-        'title' => 'Put a Hex on your Ex',
-        'trackCount' => 8,
-        'genre' => 'Heavy Metal',
-        'createdAt' => new \DateTime('2022-04-28')
-      ],
-      [
-        'title' => 'Spice Girls - Summer Tunes',
-        'trackCount' => 10,
-        'genre' => 'Pop',
-        'createdAt' => new \DateTime('2019-06-20')
-      ],
-    ];
-  }
 }
