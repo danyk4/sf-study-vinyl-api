@@ -8,11 +8,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class SongController extends AbstractController
+
 {
   #[Route('/api/songs/{id<\d+>}', name: 'api_songs_get_one', methods: ['GET'])]
   public function getSong(int $id, LoggerInterface $logger): Response
   {
-
+    
     $song = [
       'id' => $id,
       'name' => 'Waterfalls',
@@ -22,7 +23,8 @@ class SongController extends AbstractController
     $logger->info('Returning API for song {song}', [
       'song' => $id
     ]);
-
+    
     return $this->json($song);
   }
+
 }
